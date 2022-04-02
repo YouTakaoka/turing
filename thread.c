@@ -75,7 +75,6 @@ struct Stack* new_stack(struct Stack* next, struct Token data) {
     return sp;
 }
 
-
 void push(struct Stack* s, struct Token data) {
     struct Stack* s1 = new_stack(s->next, s->data);
     struct Stack tmp = {data: data, next: s1};
@@ -149,6 +148,15 @@ struct Token ftot(struct Function f) {
     return t;
 }
 
+// トークンを整数に変換
+int ttoi(struct Token t) {
+    if(t.type == STRING) {
+        return atoi(t.content.str);
+    } else {
+        return t.content.i;
+    }
+}
+
 void print_token(struct Token t) {
     switch(t.type) {
         case ERROR:
@@ -167,12 +175,21 @@ void print_token(struct Token t) {
 }
 
 void tokenize(char str[], char* tp[]) {
-    for(int i=0; tp[i] = strtok(i ? NULL : str, " "); i++) {}
+    int l = 0;
+    while(tp[l] = strtok(l ? NULL : str, " ")) {
+        l++;
+    }
 }
 
 struct Token eval(char* tp[], struct Bind* binds[], struct FunctionBind* fbinds[]) {
     char* tp_cpy[100];
-    memcpy(tp_cpy, tp, sizeof(char*) * 100);
+    int tl = 0;
+    while(tp[tl] != NULL) {
+        tp_cpy[tl] = malloc(sizeof(char*) * (strlen(tp[tl]) + 1));
+        strcpy(tp_cpy[tl], tp[tl]);
+        tl++;
+    }
+    tp_cpy[tl] = NULL;
 
     struct Token t_err = {
         type: ERROR,
@@ -182,24 +199,22 @@ struct Token eval(char* tp[], struct Bind* binds[], struct FunctionBind* fbinds[
     
     for(int i=0; tp_cpy[i] != NULL; i++) {
         struct Bind* b;
-        char tk[100];
-        strcpy(tk, tp_cpy[i]);
-        if((b = find_bind(binds, tk)) != NULL) {
-            sprintf(tk, "%d", b->value);
+        if((b = find_bind(binds, tp_cpy[i])) != NULL) {
+            sprintf(tp_cpy[i], "%d", b->value);
         }
     
         struct FunctionBind* fb;
-        if(!strcmp(tk, "!")) {
+        if(!strcmp(tp_cpy[i], "!")) {
             struct Function f = pop(s).content.f;
             int args[f.argl];
             for(int i=f.argl-1; i >= 0; --i) {
-                args[i] = pop(s).content.i;
+                args[i] = ttoi(pop(s));
             }
             push(s, apply(f, args, fbinds));
-        } else if((fb = find_fbind(fbinds, tk)) != NULL) {
+        } else if((fb = find_fbind(fbinds, tp_cpy[i])) != NULL) {
             struct Token t = ftot(fb->f);
             push(s, t);
-        } else if(!strcmp(tk, "[")) {
+        } else if(!strcmp(tp_cpy[i], "[")) {
             int argl = 0;
             char** args = &tp_cpy[i+1];
             while(strcmp(tp_cpy[++i], ":")) {
@@ -219,29 +234,29 @@ struct Token eval(char* tp[], struct Bind* binds[], struct FunctionBind* fbinds[
             };
             struct Token t = ftot(f);
             push(s, t);
-        } else if(!strcmp(tk, "+")) {
-            int i1 = pop(s).content.i;
-            int i2 = pop(s).content.i;
+        } else if(!strcmp(tp_cpy[i], "+")) {
+            int i1 = ttoi(pop(s));
+            int i2 = ttoi(pop(s));
             struct Token t = itot(i1 + i2);
             push(s, t);
-        } else if(!strcmp(tk, "-")) {
-            int i1 = pop(s).content.i;
-            int i2 = pop(s).content.i;
+        } else if(!strcmp(tp_cpy[i], "-")) {
+            int i1 = ttoi(pop(s));
+            int i2 = ttoi(pop(s));
             struct Token t = itot(i2 - i1);
             push(s, t);
-        } else if(!strcmp(tk, "*")) {
-            int i1 = pop(s).content.i;
-            int i2 = pop(s).content.i;
+        } else if(!strcmp(tp_cpy[i], "*")) {
+            int i1 = ttoi(pop(s));
+            int i2 = ttoi(pop(s));
             struct Token t = itot(i1 * i2);
             push(s, t);
-        } else if(!strcmp(tk, "if")) {
+        } else if(!strcmp(tp_cpy[i], "if")) {
             struct Token t1 = pop(s);
             struct Token t2 = pop(s);
-            int i = pop(s).content.i;
+            int i = ttoi(pop(s));
             struct Token t = i == 0 ? t2 : t1;
             push(s, t);
         } else {
-            struct Token t = itot(atoi(tk));
+            struct Token t = stot(tp_cpy[i]);
             push(s, t);
         }
     }
