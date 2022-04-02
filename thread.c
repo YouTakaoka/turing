@@ -192,7 +192,7 @@ struct Token eval(char* tp[], struct Bind* binds[], struct FunctionBind* fbinds[
         if(!strcmp(tk, "!")) {
             struct Function f = pop(s).content.f;
             int args[f.argl];
-            for(int i=0; i < f.argl; ++i) {
+            for(int i=f.argl-1; i >= 0; --i) {
                 args[i] = pop(s).content.i;
             }
             push(s, apply(f, args, fbinds));
