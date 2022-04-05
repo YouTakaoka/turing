@@ -72,7 +72,7 @@ void append_fbind(struct FunctionBind* fbinds[], struct FunctionBind* fb) {
 union TokenContent {
     int i;
     struct Function f;
-    char* str;
+    char str[100];
 };
 
 struct Token {
@@ -165,7 +165,8 @@ struct Token itot(int i) {
 }
 
 struct Token stot(char* str) {
-    union TokenContent tc = {str: str};
+    union TokenContent tc;
+    strcpy(tc.str, str);
     struct Token t = {
         type: STRING,
         content: tc
