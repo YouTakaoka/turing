@@ -265,7 +265,17 @@ struct Token eval(char tp[][100], struct Bind* binds[], struct FunctionBind* fbi
             f.argl = argl;
     
             int expr_l = 0;
-            while(strcmp(tp[++i], "]")){
+            int brac_cnt = 1;
+            while(1) {
+                ++i;
+                if(!strcmp(tp[i], "[")) {
+                    brac_cnt++;
+                } else if(!strcmp(tp[i], "]")) {
+                    brac_cnt--;
+                    if(brac_cnt == 0) {
+                        break;
+                    }
+                }
                 strcpy(f.expr[expr_l++], tp[i]);
             }
             strcpy(f.expr[expr_l], END_OF_EXPRESSION);
